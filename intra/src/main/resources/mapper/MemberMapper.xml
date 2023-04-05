@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.MemberMapper">
+  <select id="login_ok" resultType="com.example.demo.vo.MemberVo">
+     select sawon,depart,level from member
+     where userid=#{userid} and pwd=#{pwd}
+  </select>
+  
+  <select id="getDepart" resultType="com.example.demo.vo.DepartVo">
+    select * from depart where code != '00'
+  </select>
+  
+  <select id="getSawon" resultType="int">
+   select ifnull( max(right(sawon,3))+1 ,1) from member
+  </select>
+  <insert id="member_input_ok" parameterType="com.example.demo.vo.MemberVo">
+    insert into member(userid,name,pwd,sawon,depart,level,ipsa)
+    values(#{userid},#{name},#{pwd},#{sawon},#{depart},#{level},now())
+  </insert>
+  <select id="getMember" resultType="com.example.demo.vo.MemberVo">
+    select*from member where sawon=#{param}
+  </select>
+  <select id="getDepartName" resultType="String">
+    select name from depart where code=#{param}
+  </select>
+  <select id="getCommute" resultType="com.example.demo.vo.CommuteVo">
+    select * from commute where writeday=#{param1} and sawon=#{param2}
+  </select>
+  <insert id="towork">
+    <![CDATA[ insert into commute(towork,writeday,sawon,state)
+     values(curtime(), #{param1},#{param2},'09:00:00' < curtime()]]>)
+  </insert>
+  <update id="tohome">
+   <![CDATA[ update commute set tohome=curtime(),
+   state=if('18:00:00' <= curtime(), state, if(state=0,2, if(state=1,3,state) ))
+   where writeday=#{param1} and sawon=#{param2} ]]>
+  </update>
+  <select id="member_commute" resultType="com.example.demo.vo.CommuteVo">
+   select m.name, c.tohome, c.state, c.towork,c.sawon from commute as c
+   inner join member as m
+   on m.sawon=c.sawon and writeday=#{param}
+  </select>
+  <select id="getName" resultType="com.example.demo.vo.MemberVo">
+    select name,sawon from member where depart=#{param}
+  </select>
+  <insert id="sendmemo_ok" parameterType="com.example.demo.vo.MemoVo">
+    insert into memo(sesawon,resawon,title,content,writeday)
+    values(#{sesawon},#{resawon},#{title},#{content},now())
+  </insert>
+  <select id="getChongCnt" resultType="int">
+    select count(*) from memo where sesawon=#{param}  
+  </select>
+  <select id="getReadCnt" resultType="int">
+   select count(*) from memo where sesawon=#{param} and state=1
+  </select>
+  <select id="getChongCnt2" resultType="int">
+    select count(*) from memo where resawon=#{param}  
+  </select>
+  <select id="getReadCnt2" resultType="int">
+   select count(*) from memo where resawon=#{param} and state=1
+  </select>
+  <select id="getSendMemo" resultType="com.example.demo.vo.MemoVo">
+    select*, (select name from member where sawon=resawon) as name from memo where sesawon=#{param}
+  </select>
+ <!--  
+ innerjoin으로도 가능함.
+ <select id="getSendMemo" resultType="com.example.demo.vo.MemoVo">
+  select m1.*,m2.name from memo as m1 inner join member as m2 on m1.resawon=m2.sawon where sesawon=#{param}
+ </select> 
+ -->
+  <select id="getReceiveMemo" resultType="com.example.demo.vo.MemoVo">
+    select*, (select name from member where sawon=sesawon) as name from memo where resawon=#{param}
+  </select>
+   <select id="viewmemo" resultType="com.example.demo.vo.MemoVo">
+     select *  from memo where id=#{param}
+  </select>
+  
+  <update id="setState">
+     update memo set state=1 where id=#{param}
+  </update>
+</mapper>
+
+
+
+
+
+
